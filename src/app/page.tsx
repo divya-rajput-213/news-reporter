@@ -252,16 +252,6 @@ export default function Home() {
                 Trending Stories
               </Typography>
 
-              {loading && (
-                <Box
-                  display="flex"
-                  justifyContent="center"
-                  alignItems="center"
-                  height={300}
-                >
-                  <CircularProgress color="primary" />
-                </Box>
-              )}
 
               {error && <Alert severity="error">{error}</Alert>}
 
