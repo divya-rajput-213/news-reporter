@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Head from "next/head";
 import {
   AppBar,
@@ -19,16 +19,21 @@ import NewsCard from "../components/NewsCard";
 import AiInsights from "../components/AiInsights";
 import NewsFilter from "../components/NewsFilter";
 
+interface Article {
+  title: string;
+  description: string;
+  url: string;
+}
 export default function Home() {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<string>("");
   const [query, setQuery] = useState("");
   const [aiAnalysis, setAiAnalysis] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const count = 10;
 
-  const handleSearch = async (e: any,type:string) => {
+  const handleSearch = async (e:FormEvent<HTMLFormElement>, type: string) => {
     e.preventDefault();
     setLoading(true);
     const res = await fetch(
@@ -44,7 +49,7 @@ export default function Home() {
     }
   };
 
-  const analyzeArticle = async (article: any) => {
+  const analyzeArticle = async (article: Article) => {
     setAiLoading(true);
     setAiAnalysis("");
     try {
@@ -242,9 +247,8 @@ export default function Home() {
 
         {/* News & Insights */}
         {news?.length > 0 && (
-          <Grid container spacing={5} mt={4}>
-            <Grid item xs={12} md={8}>
-              <Typography variant="h4" fontWeight="bold" mb={3}>
+          <Grid container spacing={5} mt={4} >
+              <Typography variant="h4" fontWeight="bold">
                 Trending Stories
               </Typography>
 
@@ -295,13 +299,10 @@ export default function Home() {
                   </Box>
                 ))}
               </Box>
-            </Grid>
 
             {/* Insights Panel */}
             {aiAnalysis?.length > 0 && (
-              <Grid item xs={12} md={4}>
                 <AiInsights analysis={aiAnalysis} />
-              </Grid>
             )}
           </Grid>
         )}
