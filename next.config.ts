@@ -22,7 +22,7 @@ const nextConfig = {
   },
   env: {
     // The actual values should be set in .env.local
-    WORLD_NEWS_API_KEY: "4f49e902b3a3d131b0d43204f1868cff",
+    WORLD_NEWS_API_KEY: "ed144c499040c0c1260fea06f4b5be79",
     GROQ_API_KEY: "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",
   },
   eslint: {

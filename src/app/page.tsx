@@ -36,11 +36,8 @@ export default function Home() {
   const handleSearch = async (e:FormEvent<HTMLFormElement>, type: string) => {
     e.preventDefault();
     setLoading(true);
-    const res = await fetch(
-      `https://gnews.io/api/v4/search?q=${encodeURIComponent(
-        type
-      )}&token=ed144c499040c0c1260fea06f4b5be79&lang=en&max=${count}`
-    );
+    const url = `/api/news?query=${encodeURIComponent(type)}&count=${count}`;
+    const res = await fetch(url);
     const data = await res.json();
     setNews(data.articles || []);
     setLoading(false);
