@@ -1,7 +1,9 @@
+import React from "react";
 import { Typography, Button, Box } from "@mui/material";
 import { OpenInNew } from "@mui/icons-material";
+import { NewsCardProps } from "@/types/types";
 
-export default function NewsCard({ news }) {
+const NewsCard: React.FC<NewsCardProps> = ({ news }) => {
   return (
     <Box>
       {news?.map((article, index) => (
@@ -46,4 +48,6 @@ export default function NewsCard({ news }) {
       ))}
     </Box>
   );
-}
+};
+
+export default NewsCard;

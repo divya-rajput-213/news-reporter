@@ -2,70 +2,65 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import Head from "next/head";
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Container,
-  TextField,
-  Button,
-  CircularProgress,
-  Box,
-  Paper,
-  IconButton,
-} from "@mui/material";
+import { AppBar, Toolbar, Typography, Container, Box, Paper, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import CancelIcon from "@mui/icons-material/Close";
 import NewsCard from "../components/NewsCard";
+import Search from "@/components/Search";
+import Loading from "@/components/Loading";
+import ErrorMessage from "@/components/ErrorMessage";
 
-
+// Types
 interface Article {
   title: string;
-  description: string;
+  snippet: string;
   link: string;
-  date: string; // Assuming 'publishedAt' is available
+  date: string;
 }
 
-export default function Home() {
+const Home = () => {
   const [news, setNews] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
-  const [query, setQuery] = useState(""); // typing field
-  const [submittedQuery, setSubmittedQuery] = useState(""); // after submit
-  const [isEditing, setIsEditing] = useState(false); // ✨ edit mode
-
+  const [query, setQuery] = useState<string>("");
+  const [submittedQuery, setSubmittedQuery] = useState<string>("");
+  const [isEditing, setIsEditing] = useState<boolean>(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
+  // Handle Search
   const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!query.trim()) return;
 
-    setSubmittedQuery(query); // Save what user typed
-    setQuery(""); // ✨ Clear the search input field after search
-    setIsEditing(false); // Exit edit mode if searching new
+    setSubmittedQuery(query);
+    setQuery(""); 
+    setIsEditing(false); 
 
     setLoading(true);
 
-    const url = `/api/news?query=${encodeURIComponent(
-      submittedQuery || query
-    )}`;
-    const res = await fetch(url);
-    const data = await res.json();
+    try {
+      const url = `/api/news?query=${encodeURIComponent(submittedQuery || query)}`;
+      const res = await fetch(url);
+      const data = await res.json();
 
-    setNews(data.articles || []);
-    setLoading(false);
-
-    if (data.error) {
-      setError(data.error.message);
+      if (res.ok) {
+        setNews(data.articles || []);
+      } else {
+        setError(data.error?.message || "Failed to fetch news.");
+      }
+    } catch (err) {
+      console.error("Error fetching news:", err);
+      setError("An error occurred while fetching the news.");
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Scroll to bottom when new news arrives
   useEffect(() => {
-    // Scroll to bottom when new news arrives
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [news, loading]);
 
@@ -97,24 +92,12 @@ export default function Home() {
         maxWidth="md"
         sx={{ py: 4, display: "flex", flexDirection: "column", gap: 4 }}
       >
-        {/* Search Form */}
-        <Box component="form" onSubmit={handleSearch} display="flex" gap={2}>
-          <TextField
-            variant="outlined"
-            label="Ask for latest news..."
-            fullWidth
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <Button type="submit" variant="contained" sx={{ px: 4 }}>
-            Search
-          </Button>
-        </Box>
+        {/* Search Bar */}
+        <Search query={query} setQuery={setQuery} handleSearch={handleSearch} />
 
         {/* Chat Area */}
         <Paper
           ref={chatContainerRef}
-          id="chat-container"
           elevation={3}
           sx={{
             p: 3,
@@ -127,7 +110,7 @@ export default function Home() {
             gap: 2,
           }}
         >
-          {/* User Query */}
+          {/* Submitted Query */}
           {submittedQuery && !loading && (
             <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
               <Box
@@ -147,25 +130,24 @@ export default function Home() {
                 <Typography variant="body1" sx={{ flexGrow: 1 }}>
                   {submittedQuery}
                 </Typography>
-                {!isEditing && (
+                {!isEditing ? (
                   <IconButton
                     size="small"
                     sx={{ color: "white" }}
                     onClick={() => {
-                      setQuery(submittedQuery); // Load the text back into the input field
-                      setIsEditing(true); // Set edit mode to true
+                      setQuery(submittedQuery);
+                      setIsEditing(true);
                     }}
                   >
                     <EditIcon fontSize="small" />
                   </IconButton>
-                )}
-                {isEditing && (
+                ) : (
                   <IconButton
                     size="small"
                     sx={{ color: "white" }}
                     onClick={() => {
-                      setQuery(""); // Clear the query field
-                      setIsEditing(false); // Exit edit mode
+                      setQuery("");
+                      setIsEditing(false);
                     }}
                   >
                     <CancelIcon fontSize="small" />
@@ -176,49 +158,17 @@ export default function Home() {
           )}
 
           {/* Loading State */}
-          {loading && (
-            <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
-              <Box
-                sx={{
-                  bgcolor: "#e0e0e0",
-                  p: 2,
-                  borderRadius: "20px 20px 20px 0",
-                  maxWidth: "60%",
-                }}
-              >
-                <Typography variant="body2" color="text.secondary">
-                  Thinking...
-                </Typography>
-                <CircularProgress size={20} sx={{ mt: 1 }} />
-              </Box>
-            </Box>
-          )}
+          {loading && <Loading />}
 
           {/* Error Message */}
-          {error && (
-            <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
-              <Box
-                sx={{
-                  bgcolor: "#ffcdd2",
-                  p: 2,
-                  borderRadius: "20px 20px 20px 0",
-                  maxWidth: "70%",
-                  wordBreak: "break-word",
-                }}
-              >
-                <Typography variant="body2" color="error">
-                  {error}
-                </Typography>
-              </Box>
-            </Box>
-          )}
+          {error && <ErrorMessage message={error} />}
 
           {/* News Articles */}
-          
-           <NewsCard news={news}/>
-        
+          <NewsCard news={news} />
         </Paper>
       </Container>
     </>
   );
-}
+};
+
+export default Home;
