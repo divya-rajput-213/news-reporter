@@ -1,5 +1,6 @@
 "use client";
-import { FormEvent, useEffect, useState } from "react";
+
+import { FormEvent, useEffect, useRef, useState } from "react";
 import Head from "next/head";
 import {
   AppBar,
@@ -8,290 +9,215 @@ import {
   Container,
   TextField,
   Button,
-  Grid,
   CircularProgress,
-  Alert,
   Box,
   Paper,
+  IconButton,
 } from "@mui/material";
-
+import EditIcon from "@mui/icons-material/Edit";
+import CancelIcon from "@mui/icons-material/Close";
 import NewsCard from "../components/NewsCard";
-import AiInsights from "../components/AiInsights";
-import NewsFilter from "../components/NewsFilter";
+
 
 interface Article {
   title: string;
   description: string;
-  url: string;
+  link: string;
+  date: string; // Assuming 'publishedAt' is available
 }
+
 export default function Home() {
-  const [news, setNews] = useState([]);
+  const [news, setNews] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
-  const [query, setQuery] = useState("");
-  const [aiAnalysis, setAiAnalysis] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
+  const [query, setQuery] = useState(""); // typing field
+  const [submittedQuery, setSubmittedQuery] = useState(""); // after submit
+  const [isEditing, setIsEditing] = useState(false); // ✨ edit mode
 
-  const handleSearch = async (e:FormEvent<HTMLFormElement>, type: string) => {
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (!query.trim()) return;
+
+    setSubmittedQuery(query); // Save what user typed
+    setQuery(""); // ✨ Clear the search input field after search
+    setIsEditing(false); // Exit edit mode if searching new
+
     setLoading(true);
-    const url = `/api/news?query=${encodeURIComponent(type)}`;
+
+    const url = `/api/news?query=${encodeURIComponent(
+      submittedQuery || query
+    )}`;
     const res = await fetch(url);
     const data = await res.json();
+
     setNews(data.articles || []);
     setLoading(false);
+
     if (data.error) {
       setError(data.error.message);
     }
   };
 
-  const analyzeArticle = async (article: Article) => {
-    setAiLoading(true);
-    setAiAnalysis("");
-    try {
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: article.title,
-          content: article.description,
-          url: article.url,
-        }),
-      });
-      if (!res.ok) throw new Error("AI analysis failed");
-      const data = await res.json();
-      setAiAnalysis(data.analysis);
-    } catch {
-      setAiAnalysis(
-        "AI insights are unavailable right now. Please try again later."
-      );
-    } finally {
-      setAiLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (aiLoading === false && aiAnalysis) {
-      // Scroll to the bottom of the page when the API call is finished
-      window.scrollTo(0, document.body.scrollHeight);
+    // Scroll to bottom when new news arrives
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
-  }, [aiLoading, aiAnalysis]);
+  }, [news, loading]);
 
   return (
     <>
       <Head>
-        <title>Insightly | Smart News & AI Analysis</title>
-        <meta
-          name="description"
-          content="Explore trending headlines and let AI explain them."
-        />
+        <title>Insightly | Chat News</title>
+        <meta name="description" content="Fetch news in a chatbot style" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      {(loading || aiLoading) && (
-        <Box
-          sx={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            bgcolor: "rgba(255, 255, 255, 0.9)",
-            zIndex: 2000, // HIGH z-index to stay above all MUI components
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <CircularProgress size={60} color="primary" />
-        </Box>
-      )}
 
+      {/* Top Bar */}
       <AppBar
         position="static"
         sx={{
-          background: "linear-gradient(90deg, #1e88e5 0%, #3d5afe 100%)", // Slightly updated gradient
+          background: "linear-gradient(90deg, #1e88e5 0%, #3d5afe 100%)",
           boxShadow: 4,
-          padding: "24px 0", // Adjusted padding for better spacing
-          borderRadius: "0 0 20px 20px", // Rounded bottom corners
-          textAlign: "center",
         }}
       >
-        <Toolbar
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 2,
-          }}
-        >
-          <Typography
-            variant="h3"
-            fontWeight={700} // Bold heading
-            color="white"
-            sx={{ fontSize: "2.2rem", letterSpacing: "1px" }} // Reduced size with letter spacing for elegance
-          >
-            Insightly
+        <Toolbar sx={{ justifyContent: "center" }}>
+          <Typography variant="h5" fontWeight="bold">
+            Insightly Chat News
           </Typography>
-
-          <Typography
-            variant="h6"
-            color="white"
-            sx={{
-              fontSize: "1.1rem", // Slightly smaller size
-              fontWeight: 300, // Lighter weight for the subtitle
-              opacity: 0.9,
-              letterSpacing: "0.5px", // Light letter spacing for readability
-            }}
-          >
-            Smart news. Smarter insights.
-          </Typography>
-
-          {/* Decorative line */}
-          <Box
-            sx={{
-              width: "60px", // Slightly wider line
-              height: "3px",
-              backgroundColor: "#fff",
-              borderRadius: "10px",
-              marginTop: 2,
-            }}
-          />
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="lg" sx={{ py: 6 }}>
-        {/* Hero Section */}
+      {/* Main Container */}
+      <Container
+        maxWidth="md"
+        sx={{ py: 4, display: "flex", flexDirection: "column", gap: 4 }}
+      >
+        {/* Search Form */}
+        <Box component="form" onSubmit={handleSearch} display="flex" gap={2}>
+          <TextField
+            variant="outlined"
+            label="Ask for latest news..."
+            fullWidth
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <Button type="submit" variant="contained" sx={{ px: 4 }}>
+            Search
+          </Button>
+        </Box>
+
+        {/* Chat Area */}
         <Paper
-          elevation={5}
+          ref={chatContainerRef}
+          id="chat-container"
+          elevation={3}
           sx={{
-            px: 5,
-            py: 6,
-            borderRadius: 6,
-            mb: 6,
-            textAlign: "center",
-            background: "#ffffff",
-            boxShadow: "0px 12px 24px rgba(0, 0, 0, 0.1)",
-            transition: "all 0.3s ease-in-out",
-            "&:hover": {
-              boxShadow: "0px 20px 40px rgba(0, 0, 0, 0.15)",
-            },
+            p: 3,
+            borderRadius: 4,
+            height: "70vh",
+            overflowY: "auto",
+            background: "#f5f5f5",
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
           }}
         >
-          {/* Title with reduced font size */}
-          <Typography
-            variant="h5" // Changed to h5 for smaller title
-            fontWeight="bold"
-            color="primary.main"
-            mb={2}
-          >
-            Explore Top Stories from Around the World
-          </Typography>
-
-          {/* Description with reduced font size */}
-          <Typography variant="body2" color="text.secondary" mb={4}>
-            Use AI to uncover the deeper meaning behind today’s headlines.
-          </Typography>
-
-          <Box
-            component="form"
-            onSubmit={(e)=>handleSearch(e,query)}
-            display="flex"
-            gap={2} // Reduced the gap
-            justifyContent="center"
-            alignItems="center"
-            sx={{ maxWidth: 800, margin: "0 auto" }}
-          >
-            <TextField
-              variant="outlined"
-              label="Search world events or breaking news..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              sx={{
-                width: "75%",
-                borderRadius: "50px",
-                "& .MuiInputBase-root": {
-                  borderRadius: "50px",
-                },
-              }}
-            />
-            <Button
-              variant="contained"
-              size="medium" // Changed to medium for a smaller button
-              color="primary"
-              type="submit"
-              sx={{
-                px: 3, // Adjusted padding for a smaller button
-                py: 1.5,
-                borderRadius: "50px",
-                fontWeight: 600,
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  transform: "scale(1.05)",
-                },
-              }}
-            >
-              Search
-            </Button>
-          </Box>
-        </Paper>
-
-        {/* Category Filter */}
-        <NewsFilter
-        setQuery={setQuery}
-        handleSearch={handleSearch}
-        />
-
-        {/* News & Insights */}
-        {news?.length > 0 && (
-          <Grid container spacing={5} mt={4} >
-              <Typography variant="h4" fontWeight="bold">
-                Trending Stories
-              </Typography>
-
-
-              {error && <Alert severity="error">{error}</Alert>}
-
-              {!loading && !error && news.length === 0 && (
-                <Alert severity="info">
-                  No news found for your query. Try exploring another topic!
-                </Alert>
-              )}
-
+          {/* User Query */}
+          {submittedQuery && !loading && (
+            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
               <Box
                 sx={{
+                  bgcolor: "#1976d2",
+                  color: "white",
+                  p: 2,
+                  borderRadius: "20px 20px 0 20px",
+                  maxWidth: "70%",
+                  wordBreak: "break-word",
                   display: "flex",
-                  flexWrap: "wrap", // Ensures that items wrap into the next row when needed
-                  justifyContent: "center", // Centers the cards horizontally
-                  gap: 4, // Adds space between the cards
-                  width: "100%",
-                  maxWidth: 1200, // Max width of the grid
-                  margin: "auto", // Centers the grid
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 1,
                 }}
               >
-                {news.map((article, index) => (
-                  <Box
-                    key={index}
-                    sx={{
-                      flex: "1 1 calc(33.33% - 16px)", // 3 items per row on larger screens
-                      minWidth: 280, // Minimum width for each card
-                      display: "flex",
-                      justifyContent: "center", // Centers each card
+                <Typography variant="body1" sx={{ flexGrow: 1 }}>
+                  {submittedQuery}
+                </Typography>
+                {!isEditing && (
+                  <IconButton
+                    size="small"
+                    sx={{ color: "white" }}
+                    onClick={() => {
+                      setQuery(submittedQuery); // Load the text back into the input field
+                      setIsEditing(true); // Set edit mode to true
                     }}
                   >
-                    <NewsCard
-                      article={article}
-                      onAnalyze={() => analyzeArticle(article)}
-                    />
-                  </Box>
-                ))}
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                )}
+                {isEditing && (
+                  <IconButton
+                    size="small"
+                    sx={{ color: "white" }}
+                    onClick={() => {
+                      setQuery(""); // Clear the query field
+                      setIsEditing(false); // Exit edit mode
+                    }}
+                  >
+                    <CancelIcon fontSize="small" />
+                  </IconButton>
+                )}
               </Box>
+            </Box>
+          )}
 
-            {/* Insights Panel */}
-            {aiAnalysis?.length > 0 && (
-                <AiInsights analysis={aiAnalysis} />
-            )}
-          </Grid>
-        )}
+          {/* Loading State */}
+          {loading && (
+            <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+              <Box
+                sx={{
+                  bgcolor: "#e0e0e0",
+                  p: 2,
+                  borderRadius: "20px 20px 20px 0",
+                  maxWidth: "60%",
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  Thinking...
+                </Typography>
+                <CircularProgress size={20} sx={{ mt: 1 }} />
+              </Box>
+            </Box>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+              <Box
+                sx={{
+                  bgcolor: "#ffcdd2",
+                  p: 2,
+                  borderRadius: "20px 20px 20px 0",
+                  maxWidth: "70%",
+                  wordBreak: "break-word",
+                }}
+              >
+                <Typography variant="body2" color="error">
+                  {error}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+
+          {/* News Articles */}
+          
+           <NewsCard news={news}/>
+        
+        </Paper>
       </Container>
     </>
   );

@@ -1,141 +1,49 @@
-import Image from 'next/image';
-import {
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Box,
-  Stack,
-} from '@mui/material';
-import { OpenInNew, AutoAwesome } from '@mui/icons-material';
+import { Typography, Button, Box } from "@mui/material";
+import { OpenInNew } from "@mui/icons-material";
 
-export default function NewsCard({ article, onAnalyze }) {
+export default function NewsCard({ news }) {
   return (
-    <Card
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        borderRadius: 3,
-        overflow: 'hidden',
-        boxShadow: 4,
-        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-        '&:hover': {
-          transform: 'translateY(-6px)',
-          boxShadow: 8,
-        },
-        height: '100%',
-        width: '100%',
-      }}
-    >
-      {/* Image Section */}
-      {article.thumbnail ? (
-        <Box sx={{ position: 'relative', height: 220 }}>
-          <Image
-            src={article.thumbnail}
-            alt={article.title}
-            fill
-            style={{ objectFit: 'cover' }}
-            unoptimized
-          />
+    <Box>
+      {news?.map((article, index) => (
+        <Box key={index} sx={{ display: "flex", justifyContent: "flex-start", mb: 2 }}>
+          <Box
+            sx={{
+              bgcolor: "#e0e0e0",
+              p: 2,
+              borderRadius: "20px 20px 20px 0",
+              maxWidth: "70%",
+              wordBreak: "break-word",
+            }}
+          >
+            <Typography variant="subtitle1" fontWeight="bold">
+              {article.title}
+            </Typography>
+            <Typography variant="body2">{article.snippet}</Typography>
+
+            {/* Wrap Button and Typography inside a flex container with space between */}
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                href={article.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                startIcon={<OpenInNew />}
+                sx={{
+                  fontWeight: 600,
+                  textTransform: "capitalize",
+                  borderRadius: "20px",
+                }}
+              >
+                View
+              </Button>
+              <Typography variant="body2" color="text.secondary">
+                Published on: {article.date}
+              </Typography>
+            </Box>
+          </Box>
         </Box>
-      ) : (
-        <Box
-          sx={{
-            height: 220,
-            backgroundColor: '#f0f0f0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontStyle: 'italic',
-            color: 'text.secondary',
-          }}
-        >
-          No image available
-        </Box>
-      )}
-
-      {/* Content Section */}
-      <CardContent sx={{ p: 3, display: 'flex', flexDirection: 'column' }}>
-        <Typography
-          variant="h6"
-          component="h3"
-          fontWeight={600}
-          gutterBottom
-          sx={{
-            minHeight: 60,
-            color: '#333',
-            '&:hover': {
-              color: 'primary.main',
-              cursor: 'pointer',
-            },
-          }}
-        >
-          {article.title}
-        </Typography>
-
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          mb={2}
-          sx={{
-            fontSize: '0.9rem',
-            lineHeight: 1.5,
-            color: '#555',
-            flex: 1,
-          }}
-        >
-          {article.snippet?.substring(0, 150)}
-          {article.snippet?.length > 150 ? '...' : ''}
-        </Typography>
-
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          mt={2}
-        >
-          <Typography variant="caption" color="text.secondary">
-            {article.date}
-          </Typography>
-
-          <Stack direction="row" spacing={1}>
-            <Button
-              variant="contained"
-              color="primary"
-              size="small"
-              startIcon={<AutoAwesome />}
-              onClick={onAnalyze}
-              sx={{
-                fontWeight: 600,
-                textTransform: 'capitalize',
-                borderRadius: '20px',
-                transition: 'all 0.3s ease-in-out',
-                '&:hover': {
-                  transform: 'scale(1.05)',
-                },
-              }}
-            >
-              Analyze
-            </Button>
-
-            <Button
-              variant="outlined"
-              size="small"
-              href={article.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              startIcon={<OpenInNew />}
-              sx={{
-                fontWeight: 600,
-                textTransform: 'capitalize',
-                borderRadius: '20px',
-              }}
-            >
-              View
-            </Button>
-          </Stack>
-        </Stack>
-      </CardContent>
-    </Card>
+      ))}
+    </Box>
   );
 }
