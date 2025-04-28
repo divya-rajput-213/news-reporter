@@ -22,10 +22,7 @@ export default async function handler(req, res) {
     const model = new ChatGroq({
       model: "llama-3.3-70b-versatile",
       temperature: 0,
-      // configuration: {
-      //   baseURL: "https://api.groq.com/openai/v1"
-      // },
-      openAIApiKey: GROQ_API_KEY, // Note: It's still called "openAIApiKey" even for Groq
+      openAIApiKey: GROQ_API_KEY,
     });
 
     const response = await model.call([
