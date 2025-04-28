@@ -9,14 +9,7 @@ import NewsCard from "../components/NewsCard";
 import Search from "@/components/Search";
 import Loading from "@/components/Loading";
 import ErrorMessage from "@/components/ErrorMessage";
-
-// Types
-interface Article {
-  title: string;
-  snippet: string;
-  link: string;
-  date: string;
-}
+import { Article } from "@/types/types";
 
 const Home = () => {
   const [news, setNews] = useState<Article[]>([]);
