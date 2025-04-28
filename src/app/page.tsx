@@ -31,12 +31,11 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [aiAnalysis, setAiAnalysis] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
-  const count = 10;
 
   const handleSearch = async (e:FormEvent<HTMLFormElement>, type: string) => {
     e.preventDefault();
     setLoading(true);
-    const url = `/api/news?query=${encodeURIComponent(type)}&count=${count}`;
+    const url = `/api/news?query=${encodeURIComponent(type)}`;
     const res = await fetch(url);
     const data = await res.json();
     setNews(data.articles || []);

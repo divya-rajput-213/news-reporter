@@ -1,31 +1,28 @@
 export default async function handler(req, res) {
-  const { query = '', count = 10 } = req.query;
+  const { query = ''} = req.query;
 
-  const WORLD_NEWS_API_KEY = process.env.WORLD_NEWS_API_KEY;
+  const SERPAPI_API_KEY = process.env.SERPAPI_API_KEY;
 
-  if (!WORLD_NEWS_API_KEY) {
-    return res.status(500).json({ error: 'Missing WORLD_NEWS_API_KEY' });
+  if (!SERPAPI_API_KEY) {
+    return res.status(500).json({ error: 'Missing SERPAPI_API_KEY' });
   }
 
   try {
-    // Construct the URL to fetch news articles from the GNews API
-    const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&token=${WORLD_NEWS_API_KEY}&lang=en&max=${count}`;
+    // Build the SerpAPI URL
+    const url = `https://serpapi.com/search.json?q=${encodeURIComponent(query)}&tbm=nws&api_key=${SERPAPI_API_KEY}`;
     
-    // Fetch news data from the GNews API
+    // Fetch news from SerpAPI
     const response = await fetch(url);
-    
-    // Parse the response into JSON
     const data = await response.json();
 
-    // Check if articles are present in the response
-    if (!data.articles) {
-      return res.status(400).json({ error: 'No articles found.' });
+    if (!data.news_results) {
+      return res.status(400).json({ error: 'No news articles found.' });
     }
 
-    // Return the articles in the response
-    res.status(200).json({ articles: data.articles });
+    // Return only news articles
+    res.status(200).json({ articles: data.news_results });
   } catch (error) {
-    console.error("🔥 News fetch error:", error);
+    console.error("🔥 News fetch error from SerpAPI:", error);
     res.status(500).json({ error: "Failed to fetch or process news." });
   }
 }

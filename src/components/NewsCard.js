@@ -24,17 +24,17 @@ export default function NewsCard({ article, onAnalyze }) {
           boxShadow: 8,
         },
         height: '100%',
-        width: '100%', // Make sure card width is 100% of the grid item
+        width: '100%',
       }}
     >
       {/* Image Section */}
-      {article.image ? (
+      {article.thumbnail ? (
         <Box sx={{ position: 'relative', height: 220 }}>
           <Image
-            src={article.image}
+            src={article.thumbnail}
             alt={article.title}
             fill
-            style={{ objectFit: 'cover', borderRadius: '4px' }}
+            style={{ objectFit: 'cover' }}
             unoptimized
           />
         </Box>
@@ -48,7 +48,6 @@ export default function NewsCard({ article, onAnalyze }) {
             justifyContent: 'center',
             fontStyle: 'italic',
             color: 'text.secondary',
-            borderRadius: '4px',
           }}
         >
           No image available
@@ -85,8 +84,8 @@ export default function NewsCard({ article, onAnalyze }) {
             flex: 1,
           }}
         >
-          {article.description?.substring(0, 150)}
-          {article.description?.length > 150 ? '...' : ''}
+          {article.snippet?.substring(0, 150)}
+          {article.snippet?.length > 150 ? '...' : ''}
         </Typography>
 
         <Stack
@@ -96,10 +95,9 @@ export default function NewsCard({ article, onAnalyze }) {
           mt={2}
         >
           <Typography variant="caption" color="text.secondary">
-            {new Date(article.publishedAt).toLocaleDateString()}
+            {article.date}
           </Typography>
 
-          {/* Buttons Section */}
           <Stack direction="row" spacing={1}>
             <Button
               variant="contained"
@@ -119,10 +117,11 @@ export default function NewsCard({ article, onAnalyze }) {
             >
               Analyze
             </Button>
+
             <Button
               variant="outlined"
               size="small"
-              href={article.url}
+              href={article.link}
               target="_blank"
               rel="noopener noreferrer"
               startIcon={<OpenInNew />}
@@ -130,18 +129,13 @@ export default function NewsCard({ article, onAnalyze }) {
                 fontWeight: 600,
                 textTransform: 'capitalize',
                 borderRadius: '20px',
-                transition: 'all 0.3s ease-in-out',
-                '&:hover': {
-                  transform: 'scale(1.05)',
-                },
               }}
             >
-              Visit
+              View
             </Button>
           </Stack>
         </Stack>
       </CardContent>
-
     </Card>
   );
 }

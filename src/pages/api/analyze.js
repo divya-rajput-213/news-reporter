@@ -1,4 +1,4 @@
-import { ChatOpenAI } from "@langchain/openai";
+import { ChatGroq } from "@langchain/groq";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 
 export default async function handler(req, res) {
@@ -19,12 +19,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const model = new ChatOpenAI({
-      temperature: 0.7,
-      modelName: "llama3-8b-8192",
-      configuration: {
-        baseURL: "https://api.groq.com/openai/v1"
-      },
+    const model = new ChatGroq({
+      model: "llama-3.3-70b-versatile",
+      temperature: 0,
+      // configuration: {
+      //   baseURL: "https://api.groq.com/openai/v1"
+      // },
       openAIApiKey: GROQ_API_KEY, // Note: It's still called "openAIApiKey" even for Groq
     });
 

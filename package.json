@@ -12,6 +12,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@langchain/core": "^0.3.48",
+    "@langchain/groq": "^0.2.2",
     "@langchain/openai": "^0.5.7",
     "@mui/icons-material": "^7.0.2",
     "@mui/material": "^7.0.2",
