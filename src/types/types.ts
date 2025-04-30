@@ -12,8 +12,9 @@ export interface Article {
 export interface NewsCardProps {
   news: Article[]; // Array of articles
 }
-export interface SearchProps {
+export interface SearchFormProps {
   query: string;
-  setQuery: React.Dispatch<React.SetStateAction<string>>;
-  handleSearch: (e: FormEvent<HTMLFormElement>) => void;
+  setQuery: (query: string) => void;
+  handleSearch: (e: FormEvent<HTMLFormElement> | null, query?: string) => void;
+  suggestions: string[];
 }

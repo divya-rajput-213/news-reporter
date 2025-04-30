@@ -1,5 +1,7 @@
+// pages/api/news.js
+
 export default async function handler(req, res) {
-  const { query = ''} = req.query;
+  const { query = '' } = req.query;
 
   const SERPAPI_API_KEY = process.env.SERPAPI_API_KEY;
 
@@ -9,7 +11,7 @@ export default async function handler(req, res) {
 
   try {
     // Build the SerpAPI URL
-    const url = `https://serpapi.com/search.json?q=${encodeURIComponent(query)}&tbm=nws&api_key=${SERPAPI_API_KEY}`;
+    const url = `https://serpapi.com/search.json?engine=google_news&q=${encodeURIComponent(query)}&gl=us&hl=en&api_key=${SERPAPI_API_KEY}`;
     
     // Fetch news from SerpAPI
     const response = await fetch(url);
@@ -19,10 +21,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No news articles found.' });
     }
 
-    // Return only news articles
+    // Return only the news articles
     res.status(200).json({ articles: data.news_results });
   } catch (error) {
-    console.error("🔥 News fetch error from SerpAPI:", error);
+    console.error("News fetch error from SerpAPI:", error);
     res.status(500).json({ error: "Failed to fetch or process news." });
   }
 }

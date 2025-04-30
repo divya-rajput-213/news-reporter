@@ -3,6 +3,21 @@ import { Typography, Button, Box } from "@mui/material";
 import { OpenInNew } from "@mui/icons-material";
 import { NewsCardProps } from "@/types/types";
 
+const formatDate = (dateStr: string) => {
+  try {
+    const [rawDate] = dateStr.split(","); // Extract "04/30/2025"
+    const date = new Date(rawDate);
+
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
+};
+
 const NewsCard: React.FC<NewsCardProps> = ({ news }) => {
   return (
     <Box>
@@ -22,7 +37,6 @@ const NewsCard: React.FC<NewsCardProps> = ({ news }) => {
             </Typography>
             <Typography variant="body2">{article.snippet}</Typography>
 
-            {/* Wrap Button and Typography inside a flex container with space between */}
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1 }}>
               <Button
                 variant="outlined"
@@ -40,7 +54,7 @@ const NewsCard: React.FC<NewsCardProps> = ({ news }) => {
                 View
               </Button>
               <Typography variant="body2" color="text.secondary">
-                Published on: {article.date}
+                Published on: {formatDate(article.date)}
               </Typography>
             </Box>
           </Box>

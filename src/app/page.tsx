@@ -1,44 +1,102 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
-import Head from "next/head";
-import { AppBar, Toolbar, Typography, Container, Box, Paper, IconButton } from "@mui/material";
+import {
+  AppBar,
+  Box,
+  Container,
+  IconButton,
+  Paper,
+  Toolbar,
+  Typography,
+} from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import CancelIcon from "@mui/icons-material/Close";
-import NewsCard from "../components/NewsCard";
-import Search from "@/components/Search";
+import { useEffect, useRef, useState, FormEvent } from "react";
+import Head from "next/head";
+import NewsCard from "@/components/NewsCard";
 import Loading from "@/components/Loading";
 import ErrorMessage from "@/components/ErrorMessage";
+import Search from "@/components/Search"; // Import the SearchForm component
+
 import { Article } from "@/types/types";
 
 const Home = () => {
   const [news, setNews] = useState<Article[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
-  const [query, setQuery] = useState<string>("");
-  const [submittedQuery, setSubmittedQuery] = useState<string>("");
-  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+  const [submittedQuery, setSubmittedQuery] = useState("");  const [isEditing, setIsEditing] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  // Handle Search
-  const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      if (query.length > 2) {
+        fetchSuggestions(query);
+      } else {
+        setSuggestions([]);
+      }
+    }, 300);
 
-    if (!query.trim()) return;
+    return () => clearTimeout(delayDebounce);
+  }, [query]);
 
-    setSubmittedQuery(query);
-    setQuery(""); 
-    setIsEditing(false); 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node)
+      ) {
+        setSuggestions([]);
+      }
+    };
 
-    setLoading(true);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  }, [news, loading]);
+
+   // Fetch suggestions from the API
+   const fetchSuggestions = async (query: string) => {
     try {
-      const url = `/api/news?query=${encodeURIComponent(submittedQuery || query)}`;
+      const res = await fetch(
+        `/api/suggestions?query=${encodeURIComponent(query)}`
+      );
+      if (!res.ok) throw new Error("Failed to fetch suggestions");
+      const data = await res.json();
+      console.log('data) ', data)
+      setSuggestions(data.suggestions)//Limit to 8 suggestions
+    } catch (err) {
+      console.error("Error fetching suggestions:", err);
+    }
+  };
+
+  const handleSearch = async (e: FormEvent<HTMLFormElement> | null, suggestion?: string) => {
+    if (e) e.preventDefault();
+  
+    const searchTerm = suggestion || query;
+    if (!searchTerm.trim()) return;
+  
+    setSubmittedQuery(searchTerm);
+    setQuery("");
+    setIsEditing(false);
+    setSuggestions([]);
+    setLoading(true);
+    setError("");
+  
+    try {
+      const url = `/api/news?query=${encodeURIComponent(searchTerm)}`;
       const res = await fetch(url);
       const data = await res.json();
-
       if (res.ok) {
-        setNews(data.articles || []);
+        setNews(data.articles || []);  // Ensure this is correct
       } else {
         setError(data.error?.message || "Failed to fetch news.");
       }
@@ -49,13 +107,7 @@ const Home = () => {
       setLoading(false);
     }
   };
-
-  // Scroll to bottom when new news arrives
-  useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  }, [news, loading]);
+  
 
   return (
     <>
@@ -65,13 +117,10 @@ const Home = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      {/* Top Bar */}
+      {/* Top AppBar */}
       <AppBar
         position="static"
-        sx={{
-          background: "linear-gradient(90deg, #1e88e5 0%, #3d5afe 100%)",
-          boxShadow: 4,
-        }}
+        sx={{ background: "linear-gradient(to right, #1976d2, #42a5f5)" }}
       >
         <Toolbar sx={{ justifyContent: "center" }}>
           <Typography variant="h5" fontWeight="bold">
@@ -80,15 +129,20 @@ const Home = () => {
         </Toolbar>
       </AppBar>
 
-      {/* Main Container */}
+      {/* Main UI */}
       <Container
         maxWidth="md"
         sx={{ py: 4, display: "flex", flexDirection: "column", gap: 4 }}
       >
-        {/* Search Bar */}
-        <Search query={query} setQuery={setQuery} handleSearch={handleSearch} />
+        {/* Search Box */}
+        <Search
+          query={query}
+          setQuery={setQuery}
+          handleSearch={handleSearch}
+          suggestions={suggestions}
+        />
 
-        {/* Chat Area */}
+        {/* Chat Box */}
         <Paper
           ref={chatContainerRef}
           elevation={3}
@@ -150,13 +204,8 @@ const Home = () => {
             </Box>
           )}
 
-          {/* Loading State */}
           {loading && <Loading />}
-
-          {/* Error Message */}
           {error && <ErrorMessage message={error} />}
-
-          {/* News Articles */}
           <NewsCard news={news} />
         </Paper>
       </Container>
